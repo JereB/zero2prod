@@ -26,6 +26,6 @@ jobs:
       - uses: actions/checkout@v3
 
       # actual audit
-      - uses: actions-rs/audit-check@1.2.0
+      - uses: actions-rs/audit-check@v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
