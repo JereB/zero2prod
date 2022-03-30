@@ -29,3 +29,56 @@ fn spawn_app() -> String {
 
     format!("http://127.0.0.1:{}", port)
 }
+
+#[tokio::test]
+async fn subscribe_returns_200_with_valid_form_data() {
+    // setup
+    let addr = spawn_app();
+    let client = reqwest::Client::new();
+
+    // execute request
+    let body = "name=Mr%20Robot&email=mr%40robots.com";
+
+    let response = client
+        .post(addr + "/subscriptions")
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request");
+
+    // asser invariant
+    assert_eq!(200, response.status().as_u16());
+}
+
+#[tokio::test]
+async fn subscribe_returns_400_with_incomlete_form_data() {
+    //setup
+    let addr = spawn_app();
+    let client = reqwest::Client::new();
+
+    let payloads = vec![
+        ("", "empty"),
+        ("name=Mr%20Robot", "missing the email"),
+        ("email=mr%40robots.com", "missing the name"),
+    ];
+
+    // for each invalid body
+    for (payload, data_descrp) in payloads {
+        //execute request
+        let response = client
+            .post(format!("{}/subscriptions", &addr))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(payload)
+            .send()
+            .await
+            .expect("Failed to execute request");
+
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "Api did not return 400 status code when the form data was {}",
+            data_descrp
+        );
+    }
+}
